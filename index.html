@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My News</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        .news {
+            display: flex;
+            padding: 10px;
+            margin-bottom: 10px;
+
+        }
+      .news img {
+          padding-top: 12px;
+          width: 200px;
+          height: 170px;
+      }
+        .news ul {
+            margin: 0px;
+            padding-top: 0px;
+            list-style: none;
+            width: 270px;
+            height: 170px;
+            padding-left: 10px;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: rgb(231, 102, 102);
+            width: 100%;
+            height: 80px;
+            display: inline-block;
+            text-align: center;
+
+        }
+
+        .form {
+            position: absolute;
+            top: 40%;
+        }
+
+        #icons {
+            cursor: pointer;
+        }
+
+        .dialog1 {
+            width: 80%;
+            padding: 10px;
+            height: 100px;
+            margin-left: 10%;
+            background: white;
+            position: fixed;
+            margin-top: 100px;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            bottom: 0;
+            background: rgba(44, 43, 43, 0.2);
+            display: none;
+            justify-content: center;
+        }
+
+        .hien-ra {
+            display: flex;
+        }
+
+        .load {
+            width: 100%;
+            height: 100%;
+            background: whitesmoke;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .load img {
+            width: 150px;
+            height: 150px;
+        }
+    </style>
+</head>
+
+<body class="loading">
+    <div class="load">
+        <img src="Preloader_7.gif" alt="">
+    </div>
+    <div class="header">
+        <h1>MY NEWS <i class="fa fa-search" id="icons"></i> </h1>
+    </div>
+    <div class="modal">
+        <div class="dialog1">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <div class="form">
+                <label for="keys">KeyWords</label>
+                <input type="text" name="keys" id="keys" value="">
+                <button type="submit" id="search">Search</button>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="content">
+    </div>
+
+    <script>
+        // chờ loading
+        $(window).on('load', function (event) {
+            $('body').removeClass('loading');
+            $('.load').delay(1000).fadeOut('fast');
+        });
+        // hàm load news từ api
+        function loadNews() {
+            const ourRequest = new XMLHttpRequest();
+            ourRequest.open("GET", "https://gnews.io/api/v4/top-headlines?token=b24b37deb64d858273e3ff68f2197d41&lang=en",);
+            ourRequest.send();
+            ourRequest.onload = function () {
+                var ourData = JSON.parse(this.responseText);
+                var news = ourData.articles;
+                var listNews = "";
+                if (this.readyState == 4 && this.status == 200) {
+                    for (var i in news) {
+                        listNews += `<div class="news col-sm-12 col-md-6 col-lg-4">
+                    <img src="${news[i].image}">
+                    <ul>
+                    <li><h5><a href="${news[i].url}" target="_blank">${news[i].title}</a></h5></li>
+                    <li><em>${news[i].publishedAt}</em></li>
+                    <li><p>${news[i].description}</p><li>
+                    </ul>   
+                    </div>
+                  `
+                    }
+                    document.getElementById("content").innerHTML = listNews;
+                } else {
+                    alert("có vấn đề về load trang");
+                }
+
+            }
+        };
+        loadNews();
+
+        //  gọi hộp thoại 
+        $(document).ready(function () {
+            $("i").click(function () {
+                $('.modal').addClass("hien-ra")
+
+            });
+        });
+        // đóng họp thoại khi ko muốn search nữa
+        $(document).ready(function () {
+            $(".close").click(function () {
+                $('.modal').removeClass("hien-ra")
+
+            });
+        });
+        // search tin tuc
+        function searchNews() {
+            var keysworld = $('#keys').val();
+            fetch('https://gnews.io/api/v4/search?q=' + keysworld + '&token=b24b37deb64d858273e3ff68f2197d41&lang=en')
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    var html = '';
+                    $(data.articles).each(function (index, news) {
+                        html += `<div class="news col-sm-12 col-md-6 col-lg-4">
+                    <img src="${news.image}">
+                    <ul>
+                    <li><h5><a href="${news.url}" target="_blank">${news.title}</a></h5></li>
+                    <li><em>${news.publishedAt}</em></li>
+                    <li><p>${news.description}</p><li>
+                    </ul>   
+                    </div>
+                    `
+                    })
+                    $("#content").html(html);
+                });
+        };
+        $(document).ready(function () {
+            $('#search').click(function () {
+                $('.modal').removeClass("hien-ra");
+                
+                searchNews();
+            });
+        });
+        
+
+
+    </script>
+</body>
+
+</html>
